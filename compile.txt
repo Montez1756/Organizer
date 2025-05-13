@@ -1,0 +1,1 @@
+g++ -c win.cpp -o win.o -lshell32 -luser32 ;g++ -c main.cpp -o main.o -I./raygui/src -I./raylib/include -L./raylib/lib -lraylib -lwinmm -lgdi32; g++ -c OPT.cpp -o OPT.o ; g++ -o organizer.exe win.o OPT.o main.o -I./raygui/src -I./raylib/include -L./raylib/lib -lraylib -lwinmm -lgdi32 -lshell32 -luser32 -mwindows; ./organizer.exe

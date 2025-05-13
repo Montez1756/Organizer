@@ -1,0 +1,5 @@
+.m4v:C:\Windows\Videos
+.mp4:C:\Windows\Videos
+.mov:C:\Windows\Videos
+.png:C:\Windows\Videos
+.package:C:\Users\efish\Documents\Electronic Arts\The Sims 4\Mods
