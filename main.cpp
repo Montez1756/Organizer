@@ -102,7 +102,16 @@ bool save_organizer_configs(const std::vector<std::string> &configs)
     }
     return true;
 }
-
+bool save_organizer_configs(const std::string &config)
+{
+    std::ofstream file("organizer_configs.txt", std::ios::app);
+    if(!file.is_open())
+    {
+        return false;
+    }
+    file << config << "\n";
+    return true;
+}
 bool move_file(const std::string &file_path, const std::string &destination_dir)
 {
     try
@@ -216,11 +225,13 @@ int main(int argc, char **argv)
     // GUI state variables
     int textEditMode = 0;
     char newExt[32] = {0};
+    char newLookup[32] = {0};
     char newDir[256] = {0};
     bool showAddDialog = false;
     int activeConfig = -1;
     bool windowVisible = true;
     bool ctrlPressed = false;
+    OrganizerConfig *config = new OrganizerConfig;
     // Start monitor thread with initial configs
     std::thread monitor_thread(monitor_directory, std::cref(configs));
 
@@ -248,13 +259,14 @@ int main(int argc, char **argv)
 
         {
             std::lock_guard<std::mutex> lock(configMutex);
-            for (const auto &[ext, dir] : configs)
+            for (const auto config : configs)
             {
-                if (GuiButton((Rectangle){20, yPos, 200, 30}, ext.c_str()))
+                if (GuiButton((Rectangle){20, yPos, 200, 30}, config->ext.c_str()))
                 {
                     activeConfig = yPos;
                 }
-                GuiLabel((Rectangle){240, yPos, 500, 30}, dir.c_str());
+                GuiLabel((Rectangle){240, yPos, 500, 30}, config->lookup.c_str());
+                GuiLabel((Rectangle){240, yPos, 500, 30}, config->destination.c_str());
                 yPos += 35;
             }
         }
@@ -283,10 +295,15 @@ int main(int argc, char **argv)
                 textEditMode = (textEditMode == 1) ? 2 : 1;
             }
 
-            GuiLabel((Rectangle){30, yPos + 140, 100, 20}, "Directory:");
-            if (GuiTextBox((Rectangle){30, yPos + 160, 250, 20}, newDir, sizeof(newDir) - 1, textEditMode == 2))
+            GuiLabel((Rectangle){30, yPos + 140, 100, 20}, "Lookup");
+            if(GuiTextBox((Rectangle){30, yPos + 160, 250, 20}, newLookup, sizeof(newLookup) - 1, textEditMode == 2))
             {
-                textEditMode = (textEditMode == 2) ? 1 : 2;
+                textEditMode = (textEditMode == 2) ? 3 : 2;
+            }
+            GuiLabel((Rectangle){30, yPos + 140, 100, 20}, "Directory:");
+            if (GuiTextBox((Rectangle){30, yPos + 160, 250, 20}, newDir, sizeof(newDir) - 1, textEditMode == 3))
+            {
+                textEditMode = (textEditMode == 3) ? 1 : 3;
             }
 
             if (GuiButton((Rectangle){30, yPos + (260 - 40), 80, 30}, "Add"))
@@ -295,9 +312,18 @@ int main(int argc, char **argv)
                 {
                     {
                         std::lock_guard<std::mutex> lock(configMutex);
-                        configs[newExt] = newDir;
+                        config->ext = newExt;
+                        config->lookup = newLookup;
+                        config->destination = newDir;
+                        configs.push_back(config);
                     }
-                    save_organizer_configs({std::string(newExt) + ":" + newDir});
+                    std::string newConfig = newExt;
+                    if(newLookup)
+                    {
+                        newConfig += ";" + std::string(newLookup);
+                    }
+                    newConfig += ":" + std::string(newDir);
+                    save_organizer_configs(newConfig);
                     showAddDialog = false;
                     textEditMode = 0;
                 }
