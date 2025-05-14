@@ -23,6 +23,12 @@ namespace fs = std::filesystem;
 std::atomic<bool> g_running{true};
 std::mutex configMutex;
 
+typedef struct OrganizerConfig {
+    std::string ext;
+    std::string lookup;
+    std::string destination;
+}OrganizerConfig;
+
 std::pair<std::string, std::string> split(const std::string &str)
 {
     std::pair<std::string, std::string> splitted;
@@ -41,7 +47,7 @@ void lowerCase(std::string &str)
                    { return std::tolower(c); });
 }
 
-bool load_organizer_configs(std::map<std::string, std::string> &configs)
+bool load_organizer_configs(std::vector<OrganizerConfig *> &configs)
 {
     std::ifstream file("organizer_configs.txt");
     if (!file.is_open())
@@ -53,9 +59,33 @@ bool load_organizer_configs(std::map<std::string, std::string> &configs)
     std::string linebuf;
     while (std::getline(file, linebuf))
     {
-        configs.emplace(split(linebuf));
+        int i = 0;
+        OrganizerConfig config = new OrganizerConfig;
+        std::string ext= "";
+        std::string look = "";
+        std::string destination = "";
+        while(i != linebuf.length()){
+            while(linebuf[i] != ":" && linebuf[i] != ";"){
+                ext += linebuf[i++];
+            }
+            if(linebuf[i] == ";"){
+                while(linebuf[i] != ":"){
+                    look += linebuf[i++];
+                }
+            }
+            if(linebuf[i] == ":"){
+                while(linebuf[i] != ";" && linebuf[i] != ":" && i != linebuf.length){
+                    destination += linebuf[i];
+                }
+            }
+        }
+        config.ext = ext;
+        config.look = look;
+        config.destination = destination;
+
+        configs.push_back(config);
     }
-    return true;
+        return true;
 }
 
 bool save_organizer_configs(const std::vector<std::string> &configs)
@@ -102,10 +132,10 @@ bool move_file(const std::string &file_path, const std::string &destination_dir)
     }
 }
 
-void monitor_directory(const std::map<std::string, std::string> &initialConfigs)
+void monitor_directory(const std::vector<OrganizerConfig *> &initialConfigs)
 {
     // Create local copy of configs
-    std::map<std::string, std::string> localConfigs = initialConfigs;
+    std::vector<OrganizerConfig *> localConfigs = initialConfigs;
     fs::path path_to_watch(get_downloads_path());
     auto last_write_time = fs::last_write_time(path_to_watch);
 
@@ -133,7 +163,13 @@ void monitor_directory(const std::map<std::string, std::string> &initialConfigs)
                     {
                         std::string ext = entry.path().extension().string();
                         lowerCase(ext);
-
+                        for(const auto &config: localConfigs){
+                            if(config.ext == ext){
+                                if(config.look != nullptr){
+                                    // Logic to check file for thing
+                                }
+                            }
+                        }
                         if (localConfigs.find(ext) != localConfigs.end())
                         {
                             move_file(entry.path().string(), localConfigs.at(ext));
