@@ -1,13 +1,13 @@
-SRC := $(wildcard *.c)
-OBJ := $(SRC:.c=.o)
+SRC := $(wildcard *.cpp)
+OBJ := $(SRC:.cpp=.o)
 TARGET := organizer.exe
-
+FLAGS := -I./raygui/src -I./raylib/include -L./raylib/lib -lraylib -lwinmm -lgdi32 -lshell32 -luser32 -mwindows
 $(TARGET): $(OBJ)
-	$(CC) -o $@ $^
+	$(CXX) -o $@ $^ $(FLAGS)
 	rm -rf *.o
 
-%.o: %.c
-	$(CC) -c $< -o $@
+%.o: %.cpp
+	$(CXX) -v -c $< -o $@ $(FLAGS)
 
 clean:
 	rm -f $(OBJ) $(TARGET)
