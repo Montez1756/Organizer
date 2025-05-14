@@ -60,28 +60,28 @@ bool load_organizer_configs(std::vector<OrganizerConfig *> &configs)
     while (std::getline(file, linebuf))
     {
         int i = 0;
-        OrganizerConfig config = new OrganizerConfig;
+        OrganizerConfig *config = new OrganizerConfig;
         std::string ext= "";
         std::string look = "";
         std::string destination = "";
         while(i != linebuf.length()){
-            while(linebuf[i] != ":" && linebuf[i] != ";"){
+            while(linebuf[i] != ':' && linebuf[i] != ';'){
                 ext += linebuf[i++];
             }
-            if(linebuf[i] == ";"){
-                while(linebuf[i] != ":"){
+            if(linebuf[i] == ';'){
+                while(linebuf[i] != ':'){
                     look += linebuf[i++];
                 }
             }
-            if(linebuf[i] == ":"){
-                while(linebuf[i] != ";" && linebuf[i] != ":" && i != linebuf.length){
+            if(linebuf[i] == ':'){
+                while(linebuf[i] != ';' && linebuf[i] != ':' && i != linebuf.length()){
                     destination += linebuf[i];
                 }
             }
         }
-        config.ext = ext;
-        config.look = look;
-        config.destination = destination;
+        config->ext = ext;
+        config->lookup = look;
+        config->destination = destination;
 
         configs.push_back(config);
     }
@@ -164,16 +164,16 @@ void monitor_directory(const std::vector<OrganizerConfig *> &initialConfigs)
                         std::string ext = entry.path().extension().string();
                         lowerCase(ext);
                         for(const auto &config: localConfigs){
-                            if(config.ext == ext){
-                                if(config.look != nullptr){
+                            if(config->ext == ext){
+                                if(!config->lookup.empty()){
                                     // Logic to check file for thing
                                 }
                             }
                         }
-                        if (localConfigs.find(ext) != localConfigs.end())
-                        {
-                            move_file(entry.path().string(), localConfigs.at(ext));
-                        }
+                        // if (localConfigs.find(ext) != localConfigs.end())
+                        // {
+                        //     move_file(entry.path().string(), localConfigs.at(ext));
+                        // }
                     }
                 }
             }
@@ -189,7 +189,7 @@ void monitor_directory(const std::vector<OrganizerConfig *> &initialConfigs)
 
 int main(int argc, char **argv)
 {
-    std::map<std::string, std::string> configs;
+    std::vector<OrganizerConfig *> configs;
     if (!load_organizer_configs(configs))
     {
         return EXIT_FAILURE;
